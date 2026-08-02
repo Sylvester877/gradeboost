@@ -1,0 +1,122 @@
+{
+  "name": "gradeboost",
+  "version": "1.0.2",
+  "description": "AI study tutor for better grades",
+  "author": "GradeBoost",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "cross-env NEXT_SKIP_DB=1 next build --webpack && node scripts/prepare-standalone.mjs",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "electron:build": "cross-env NEXT_SKIP_DB=1 next build --webpack && node scripts/prepare-standalone.mjs && electron-builder",
+    "electron:start": "cross-env NEXT_SKIP_DB=1 next build --webpack && node scripts/prepare-standalone.mjs && electron .",
+    "electron:pack": "electron-builder --dir",
+    "electron:dist": "electron-builder",
+    "electron:release": "cross-env NEXT_SKIP_DB=1 next build --webpack && node scripts/prepare-standalone.mjs && electron-builder --publish always"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.2.14",
+    "@types/busboy": "^1.5.4",
+    "busboy": "^1.6.0",
+    "dotenv": "17.3.1",
+    "drizzle-orm": "0.45.2",
+    "electron-updater": "^6.8.9",
+    "framer-motion": "^12.42.2",
+    "katex": "^0.18.1",
+    "lucide-react": "^1.27.0",
+    "next": "16.2.6",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-markdown": "^10.1.0",
+    "recharts": "^3.10.1",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "unpdf": "^1.8.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.17",
+    "@types/node": "22.19.15",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "cross-env": "^7.0.3",
+    "drizzle-kit": "0.31.10",
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.2.6",
+    "postcss": "8.5.8",
+    "tailwindcss": "4.1.17",
+    "typescript": "5.9.3"
+  },
+  "build": {
+    "appId": "com.gradeboost.app",
+    "productName": "GradeBoost",
+    "afterPack": "scripts/after-pack-icon.js",
+    "directories": {
+      "output": "dist2"
+    },
+    "includeSubNodeModules": false,
+    "publish": {
+      "provider": "github",
+      "owner": "Sylvester877",
+      "repo": "gradeboost"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json",
+      "!node_modules/**",
+      "node_modules/electron-updater/**",
+      "node_modules/builder-util-runtime/**",
+      "node_modules/fs-extra/**",
+      "node_modules/graceful-fs/**",
+      "node_modules/jsonfile/**",
+      "node_modules/universalify/**",
+      "node_modules/js-yaml/**",
+      "node_modules/argparse/**",
+      "node_modules/lazy-val/**",
+      "node_modules/lodash.escaperegexp/**",
+      "node_modules/lodash.isequal/**",
+      "node_modules/semver/**",
+      "node_modules/tiny-typed-emitter/**",
+      "node_modules/debug/**",
+      "node_modules/ms/**",
+      "node_modules/sax/**"
+    ],
+    "extraResources": [
+      {
+        "from": ".next/standalone",
+        "to": ".next/standalone"
+      },
+      {
+        "from": "public",
+        "to": "public"
+      },
+      {
+        "from": "drizzle",
+        "to": "drizzle"
+      },
+      {
+        "from": ".env",
+        "to": ".env"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "public/icon.ico",
+      "installerHeaderIcon": "public/icon.ico"
+    }
+  }
+}
