@@ -104,6 +104,10 @@ if (!gotTheLock) {
 
 let serverProcess = null;
 let mainWindow = null;
+// Set when the user explicitly triggers install (Settings → Install).
+// quitAndInstall() itself quits the app, so before-quit would otherwise fire
+// a second install attempt and log a confusing "already been triggered".
+let explicitInstallTriggered = false;
 
 function getFreePort() {
   return new Promise((resolve) => {
@@ -294,7 +298,10 @@ function setupAutoUpdater() {
     autoUpdater = updater;
 
     updater.autoDownload = false; // ask the user before downloading
-    updater.autoInstallOnAppQuit = true;
+    // We handle install-on-quit ourselves (below) so it can run the NSIS
+    // assisted installer silently; electron-updater's built-in path calls
+    // quitAndInstall() with non-silent defaults and would show the wizard UI.
+    updater.autoInstallOnAppQuit = false;
     updater.logger = {
       info: (msg) => logInfo(`[updater] ${msg}`),
       warn: (msg) => logInfo(`[updater] ${msg}`),
@@ -377,7 +384,26 @@ function setupAutoUpdater() {
         broadcastUpdaterStatus();
       })
     );
-    ipcMain.handle("updater:install", () => updater.quitAndInstall());
+    // The NSIS build is an assisted installer (oneClick: false), so a non-silent
+    // quitAndInstall() would show the wizard UI and wait for clicks. Pass
+    // isSilent=true to run the update fully automatically; isForceRunAfter=true
+    // keeps the app relaunching after install.
+    ipcMain.handle("updater:install", () => {
+      explicitInstallTriggered = true;
+      updater.quitAndInstall(true, true);
+    });
+
+    // Install-on-quit: autoInstallOnAppQuit is disabled above, so we drive it
+    // ourselves to keep the assisted installer silent. Skip if the user already
+    // explicitly triggered an install (quitAndInstall() will quit the app,
+    // firing before-quit again with stage still "downloaded"). Set the flag
+    // here too so a quit-initiated install can't re-fire before-quit.
+    app.on("before-quit", () => {
+      if (!explicitInstallTriggered && autoUpdater && updaterStatus.stage === "downloaded") {
+        explicitInstallTriggered = true;
+        autoUpdater.quitAndInstall(true, true);
+      }
+    });
 
     // Kick off a quiet background check a few seconds after launch.
     setTimeout(() => {
